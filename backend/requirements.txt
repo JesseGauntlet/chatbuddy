@@ -1,0 +1,28 @@
+# Backend requirements for ChatBuddy
+
+# Web framework
+fastapi>=0.100.0
+uvicorn>=0.22.0
+
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.11.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+psycopg2-binary>=2.9.6  # For PostgreSQL (future use)
+
+# API integrations
+openai>=0.27.0
+python-dotenv>=1.0.0
+
+# Authentication
+python-jose>=3.3.0  # For JWT
+passlib>=1.7.4     # For password hashing
+bcrypt>=4.0.1      # For password hashing
+
+# Testing
+pytest>=7.3.1
+httpx>=0.24.1     # For async HTTP requests in tests
+
+# Utilities
+python-multipart>=0.0.6  # For form data parsing 
