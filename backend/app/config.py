@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # CORS Configuration
-    CORS_ORIGINS: List[str] = ["*"]  # For development, restrict in production
+    CORS_ORIGINS: str = "*"  # For development, restrict in production
 
     # Database Configuration
     DATABASE_URL: str = "sqlite:///./chatbuddy.db"
@@ -31,8 +31,17 @@ class Settings(BaseSettings):
     @validator("OPENAI_API_KEY", pre=True)
     def validate_openai_api_key(cls, v):
         if not v:
-            raise ValueError("OPENAI_API_KEY must be set")
+            # For development without OpenAI, we'll allow running without a key
+            print("Warning: OPENAI_API_KEY is not set. LLM functionality will not work.")
+            return v
         return v
+    
+    @property
+    def cors_origin_list(self) -> List[str]:
+        """Parse CORS_ORIGINS into a list of strings"""
+        if self.CORS_ORIGINS == "*":
+            return ["*"]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
     
     class Config:
         env_file = ".env"
