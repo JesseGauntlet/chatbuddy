@@ -1,11 +1,26 @@
 import SwiftUI
 
 struct SessionsView: View {
-    @StateObject private var viewModel = SessionsViewModel()
+    @StateObject private var localViewModel = SessionsViewModel()
+    @EnvironmentObject private var authViewModel: AuthViewModel
+    
+    // Optional injected view model (used when created from MainTabView)
+    var injectedViewModel: SessionsViewModel?
+    
     @State private var showingNewSessionAlert = false
     @State private var newSessionTitle = ""
     @State private var selectedSession: ChatSession?
     @State private var showingDeleteConfirmation = false
+    
+    // Explicit initializer
+    init(injectedViewModel: SessionsViewModel? = nil) {
+        self.injectedViewModel = injectedViewModel
+    }
+    
+    // Return the viewModel to use (either injected or local)
+    private var viewModel: SessionsViewModel {
+        return injectedViewModel ?? localViewModel
+    }
     
     var body: some View {
         NavigationView {
@@ -19,7 +34,7 @@ struct SessionsView: View {
                     sessionsList
                 }
             }
-            .navigationTitle("ChatBuddy")
+            .navigationTitle("All Chats")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -53,11 +68,18 @@ struct SessionsView: View {
                 Text(viewModel.errorMessage ?? "Unknown error")
             }
             .onAppear {
-                viewModel.loadSessions()
+                if injectedViewModel == nil {
+                    // Using our local view model
+                    localViewModel.loadSessions()
+                }
             }
             .refreshable {
                 await refreshSessions()
             }
+            
+            // Default detail view
+            Text("Select a conversation from the list")
+                .foregroundColor(.secondary)
         }
         .navigationViewStyle(StackNavigationViewStyle())
     }
@@ -148,8 +170,8 @@ struct SessionsView: View {
         Task {
             if let session = await viewModel.createSession(title: title) {
                 selectedSession = session
-                newSessionTitle = ""
             }
+            newSessionTitle = ""
         }
     }
     

@@ -19,23 +19,6 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                         }
                         .padding(.vertical, 5)
-                        
-                        Button(role: .destructive) {
-                            showingLogoutConfirmation = true
-                        } label: {
-                            Text("Sign Out")
-                        }
-                        .confirmationDialog(
-                            "Sign Out",
-                            isPresented: $showingLogoutConfirmation
-                        ) {
-                            Button("Sign Out", role: .destructive) {
-                                authViewModel.logout()
-                            }
-                            Button("Cancel", role: .cancel) { }
-                        } message: {
-                            Text("Are you sure you want to sign out?")
-                        }
                     } else {
                         Text("Loading...")
                     }
@@ -132,6 +115,31 @@ struct SettingsView: View {
                         Spacer()
                         Text("1.0.0")
                             .foregroundColor(.secondary)
+                    }
+                }
+                
+                // Always visible logout section
+                Section {
+                    Button(role: .destructive) {
+                        showingLogoutConfirmation = true
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Text("Sign Out")
+                                .fontWeight(.semibold)
+                            Spacer()
+                        }
+                    }
+                    .confirmationDialog(
+                        "Sign Out",
+                        isPresented: $showingLogoutConfirmation
+                    ) {
+                        Button("Sign Out", role: .destructive) {
+                            authViewModel.logout()
+                        }
+                        Button("Cancel", role: .cancel) { }
+                    } message: {
+                        Text("Are you sure you want to sign out?")
                     }
                 }
             }

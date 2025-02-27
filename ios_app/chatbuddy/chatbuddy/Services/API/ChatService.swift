@@ -67,12 +67,27 @@ class ChatService {
     
     /// Send a message and get AI response
     func sendMessage(sessionId: String?, message: String, model: String? = nil) async throws -> ChatResponse {
+        print("DEBUG: ChatService - Sending message to API. SessionID: \(sessionId ?? "nil"), Message: \(message)")
+        
         let request = ChatRequest(
             session_id: sessionId,
             message: message,
             model: model
         )
-        return try await apiService.post(path: "/chat/message", body: request)
+        
+        do {
+            let response: ChatResponse = try await apiService.post(path: "/chat/message", body: request)
+            print("DEBUG: ChatService - Received response from API:")
+            print("DEBUG: ChatService - Session ID: \(response.session_id)")
+            print("DEBUG: ChatService - User message ID: \(response.message.message_id)")
+            print("DEBUG: ChatService - AI response ID: \(response.ai_response.message_id)")
+            print("DEBUG: ChatService - AI response content: \(response.ai_response.content.prefix(50))...")
+            print("DEBUG: ChatService - AI response sender: \(response.ai_response.sender)")
+            return response
+        } catch {
+            print("ERROR: ChatService - Failed to send message: \(error)")
+            throw error
+        }
     }
     
     /// Get all messages for a session

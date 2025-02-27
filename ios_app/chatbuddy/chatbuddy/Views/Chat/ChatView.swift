@@ -6,6 +6,7 @@ struct ChatView: View {
     @State private var scrollToBottom = false
     @Environment(\.presentationMode) var presentationMode
     
+    // Optional parameters - if not provided, a default session will be used
     var sessionId: String?
     var title: String?
     
@@ -25,6 +26,9 @@ struct ChatView: View {
                                     MessageTimestamp(date: message.timestamp)
                                 }
                                 .id(message.id)
+                                .onAppear {
+                                    print("DEBUG: Displaying message: \(message.id) from \(message.sender.rawValue)")
+                                }
                             }
                             
                             // Scroll anchor
@@ -152,22 +156,7 @@ struct ChatView: View {
             }
         }
         .onAppear {
-            if let sessionId = sessionId {
-                // Load existing session
-                Task {
-                    await viewModel.loadSession(id: sessionId)
-                    
-                    // Set scroll flag after loading with a delay
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        scrollToBottom = true
-                    }
-                }
-            } else {
-                // Create new session
-                Task {
-                    await viewModel.createSession(title: title ?? "New Conversation")
-                }
-            }
+            initializeChat()
         }
         .alert(item: Binding<AlertItem?>(
             get: { viewModel.errorMessage != nil ? AlertItem(message: viewModel.errorMessage!) : nil },
@@ -181,20 +170,50 @@ struct ChatView: View {
         }
     }
     
+    // Initialize chat based on whether sessionId was provided
+    private func initializeChat() {
+        print("DEBUG: ChatView - Initializing chat. SessionID: \(sessionId ?? "nil"), Title: \(title ?? "nil")")
+        
+        Task {
+            if let sessionId = sessionId {
+                // Load existing session if ID was provided
+                print("DEBUG: ChatView - Loading existing session: \(sessionId)")
+                await viewModel.loadSession(id: sessionId)
+                
+                // Set scroll flag after loading with a delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    scrollToBottom = true
+                }
+            } else {
+                // Check for default session or create a new one when opened directly
+                let defaultTitle = title ?? "Main Chat"
+                print("DEBUG: ChatView - Creating new session with title: \(defaultTitle)")
+                await viewModel.createSession(title: defaultTitle)
+            }
+        }
+    }
+    
     // MARK: - Navigation Bar
     private var navigationBar: some View {
         HStack {
-            Button {
-                presentationMode.wrappedValue.dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.title3)
-                    .padding()
+            // Only show back button when presented as a sheet/navigation push
+            if sessionId != nil {
+                Button {
+                    presentationMode.wrappedValue.dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.title3)
+                        .padding()
+                }
+            } else {
+                // Empty space for alignment
+                Color.clear
+                    .frame(width: 44, height: 44)
             }
             
             Spacer()
             
-            Text(viewModel.currentSession?.title ?? "New Chat")
+            Text(viewModel.currentSession?.title ?? "Chat")
                 .font(.headline)
             
             Spacer()

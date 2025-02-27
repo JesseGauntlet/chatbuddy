@@ -40,20 +40,23 @@ struct MainContentView: View {
 struct MainTabView: View {
     @State private var selectedTab = 0
     @EnvironmentObject private var authViewModel: AuthViewModel
+    @StateObject private var sessionsViewModel = SessionsViewModel()
+    @State private var defaultSessionId: String? = nil
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Chat sessions tab
-            SessionsView()
+            // Main chat tab - always creates or shows a default chat
+            ChatView(sessionId: defaultSessionId, title: "Main Chat")
                 .tabItem {
-                    Label("Chats", systemImage: "bubble.left.and.bubble.right")
+                    Label("Chat", systemImage: "bubble.left.and.text.bubble.right")
                 }
                 .tag(0)
             
-            // New chat tab
-            ChatView()
+            // All chats/sessions tab - inject the shared view model
+            SessionsView(injectedViewModel: sessionsViewModel)
+                .environmentObject(authViewModel)
                 .tabItem {
-                    Label("New Chat", systemImage: "plus.circle")
+                    Label("All Chats", systemImage: "list.bullet")
                 }
                 .tag(1)
             
@@ -63,6 +66,23 @@ struct MainTabView: View {
                     Label("Settings", systemImage: "gear")
                 }
                 .tag(2)
+        }
+        .onAppear {
+            // Load sessions once when tab view appears
+            Task {
+                await sessionsViewModel.fetchSessions()
+                
+                // Set the default session ID to the first session if available
+                if !sessionsViewModel.sessions.isEmpty {
+                    defaultSessionId = sessionsViewModel.sessions.first?.id
+                }
+            }
+        }
+        // Observe the defaultSessionId from the view model instead of the sessions array
+        .onChange(of: sessionsViewModel.defaultSessionId) { _, newValue in
+            if newValue != nil && defaultSessionId == nil {
+                defaultSessionId = newValue
+            }
         }
     }
 } 

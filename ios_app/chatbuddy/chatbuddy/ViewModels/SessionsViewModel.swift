@@ -5,6 +5,7 @@ class SessionsViewModel: ObservableObject {
     @Published var sessions: [ChatSession] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    @Published var defaultSessionId: String? = nil
     
     private let chatService = ChatService.shared
     
@@ -16,6 +17,16 @@ class SessionsViewModel: ObservableObject {
     func loadSessions() {
         Task {
             await fetchSessions()
+            
+            // Create a default session if none exists
+            if sessions.isEmpty {
+                if let defaultSession = await createSession(title: "Main Chat") {
+                    defaultSessionId = defaultSession.id
+                }
+            } else {
+                // Set the first session as default
+                defaultSessionId = sessions.first?.id
+            }
         }
     }
     

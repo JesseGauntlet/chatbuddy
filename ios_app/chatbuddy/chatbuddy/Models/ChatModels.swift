@@ -80,6 +80,21 @@ enum MessageSender: String, Codable {
     case ai
     case system
     
+    // Handle potential case variations from the API
+    init?(rawValue: String) {
+        switch rawValue.lowercased() {
+        case "user":
+            self = .user
+        case "ai", "assistant", "bot":
+            self = .ai
+        case "system":
+            self = .system
+        default:
+            print("WARNING: Unknown message sender type: \(rawValue)")
+            return nil
+        }
+    }
+    
     var isUser: Bool {
         return self == .user
     }

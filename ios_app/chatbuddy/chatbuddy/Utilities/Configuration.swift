@@ -13,13 +13,9 @@ class Configuration {
     // For development/debugging on a real device
     static func developmentAPIBaseURL() -> String {
         #if DEBUG
-        // When running on the simulator, use localhost
-        #if targetEnvironment(simulator)
+        // When connected via USB with port forwarding, use localhost
+        // When on same network, use the Mac's IP address
         return "http://localhost:8000/api"
-        // When running on device, use the Mac's IP address
-        #else
-        return "http://10.10.1.66:8000/api"
-        #endif
         #else
         return baseURL
         #endif
@@ -28,13 +24,9 @@ class Configuration {
     // For development/debugging on a real device
     static func developmentHealthCheckURL() -> String {
         #if DEBUG
-        // When running on the simulator, use localhost
-        #if targetEnvironment(simulator)
+        // When connected via USB with port forwarding, use localhost
+        // When on same network, use the Mac's IP address
         return "http://localhost:8000/"
-        // When running on device, use the Mac's IP address
-        #else
-        return "http://10.10.1.66:8000/"
-        #endif
         #else
         return healthCheckURL
         #endif

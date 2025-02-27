@@ -24,7 +24,7 @@ class ChatViewModel: ObservableObject {
     // Date formatter for message timestamps
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
         return formatter
     }()
     
@@ -173,11 +173,17 @@ class ChatViewModel: ObservableObject {
             let userMessage = Message.preview(content: messageText, sender: .user)
             messages.append(userMessage)
             
+            print("DEBUG: Sending message to API: \(messageText)")
+            
             // Send message to the API
             let response = try await chatService.sendMessage(
                 sessionId: currentSession?.id,
                 message: messageText
             )
+            
+            print("DEBUG: Received API response with session ID: \(response.session_id)")
+            print("DEBUG: AI response content: \(response.ai_response.content)")
+            print("DEBUG: AI response sender: \(response.ai_response.sender)")
             
             // If no session yet, set it
             if currentSession == nil {
@@ -199,12 +205,16 @@ class ChatViewModel: ObservableObject {
                         endTime: endDate,
                         summaryText: sessionResponse.summary_text
                     )
+                    
+                    print("DEBUG: Created new session with ID: \(sessionResponse.session_id)")
                 }
             }
             
             // Add AI response to the UI
             if let date = dateFormatter.date(from: response.ai_response.timestamp),
                let sender = MessageSender(rawValue: response.ai_response.sender) {
+                
+                print("DEBUG: Creating AI message with sender: \(sender.rawValue)")
                 
                 let aiMessage = Message(
                     id: response.ai_response.message_id,
@@ -213,11 +223,14 @@ class ChatViewModel: ObservableObject {
                     timestamp: date
                 )
                 
+                print("DEBUG: Adding AI message to messages array. Current count: \(messages.count)")
                 messages.append(aiMessage)
+                print("DEBUG: New messages count: \(messages.count)")
                 
                 // Calculate response time
                 if let startTime = messageStartTime {
                     lastResponseTime = Date().timeIntervalSince(startTime)
+                    print("DEBUG: Response time: \(lastResponseTime) seconds")
                 }
                 
                 // If voice output is enabled, speak the response
@@ -226,6 +239,10 @@ class ChatViewModel: ObservableObject {
                         try await speakResponse(response.ai_response.content)
                     }
                 }
+            } else {
+                print("ERROR: Failed to parse AI response date or sender")
+                print("DEBUG: Timestamp: \(response.ai_response.timestamp)")
+                print("DEBUG: Sender: \(response.ai_response.sender)")
             }
             
             isProcessing = false
@@ -234,7 +251,7 @@ class ChatViewModel: ObservableObject {
             
             // Add error message
             errorMessage = "Failed to send message: \(error.localizedDescription)"
-            print("Message sending error: \(error)")
+            print("ERROR: Message sending error: \(error)")
             
             // Add system message showing error
             let errorMsg = Message.preview(
